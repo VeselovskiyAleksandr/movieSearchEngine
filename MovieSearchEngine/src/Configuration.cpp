@@ -2,8 +2,7 @@
 #define MAX_SIZE 10000 //наибольшее общее количество слов в документах
 #define MAX_RESPONS 5 //наибольщее число ответов
 
-template <class T> int ConfigurationCounter <T>::Counter(0);
-struct Configuration :ConfigurationCounter <Configuration>
+struct Configuration
 {
 	string name;//Содержит название движка
 	string version;//версия движка
