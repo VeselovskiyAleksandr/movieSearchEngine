@@ -1,13 +1,7 @@
 
 #include "ConverterJSON.h"
 
-class ConverterJSON {
-public: ConverterJSON() = default;
-	  Configuration configuration;
-	  vector<string> getRequests;
-
-	  //функция начала работы движка
-	  void start()
+	  void ConverterJSON :: start()
 	  {
 		  cout << "                              Launching a search engine... " << "\n";
 		  nlohmann::json config;
@@ -41,9 +35,7 @@ public: ConverterJSON() = default;
 		  cnfile.close();
 	  };
 
-
-	  //функция проверки наличия файла
-	  bool FileIsExist(string filePath)
+	  bool ConverterJSON :: FileIsExist(string filePath)
 	  {
 		  bool isExist = false;
 		  std::ifstream fin(filePath.c_str());
@@ -55,8 +47,7 @@ public: ConverterJSON() = default;
 		  return isExist;
 	  }
 
-	  //функция проверки открытия файла
-	  void openFile(string path)
+	  void ConverterJSON :: openFile(string path)
 	  {
 		  if (FileIsExist(path))
 		  {
@@ -71,8 +62,7 @@ public: ConverterJSON() = default;
 		  }
 	  };
 
-	  //функция ввода запроса
-	  void requerysInputFunction(vector<string>& getRequests)
+	  void ConverterJSON :: requerysInputFunction(vector<string>& getRequests)
 	  {
 		  if (getRequests.size() < configuration.maxRequest)
 		  {
@@ -93,8 +83,7 @@ public: ConverterJSON() = default;
 		  }
 	  }
 
-	  //функция выделения слов
-	  void wordSplitFunction(string sentence, vector<string>& setWords)
+	  void ConverterJSON :: wordSplitFunction(string sentence, vector<string>& setWords)
 	  {
 		  string highlightedWord = "";
 		  int j = 0, k = 0;
@@ -120,8 +109,7 @@ public: ConverterJSON() = default;
 		  }
 	  }
 
-	  //функция записи данных в карту
-	  void multiMapFillFunction(vector<Entry>& vectEntr, vector<Entry>& getWC, multimap<string, vector< Entry>>& countWM)
+	  void ConverterJSON :: multiMapFillFunction(vector<Entry>& vectEntr, vector<Entry>& getWC, multimap<string, vector< Entry>>& countWM)
 	  {
 		  for (int ip = 0; ip < getWC.size(); ++ip)
 		  {
@@ -140,8 +128,7 @@ public: ConverterJSON() = default;
 		  getWC.clear();
 	  }
 
-	  //функция заполнения вектора Entry
-	  void vectorEntryFillFunction(vector<string>& vectWord, vector<Entry>& getWC, int fileCount)
+	  void ConverterJSON :: vectorEntryFillFunction(vector<string>& vectWord, vector<Entry>& getWC, int fileCount)
 	  {
 		  size_t wordRepetitionCount = 0;
 		  int entryCount = 0;
@@ -175,9 +162,7 @@ public: ConverterJSON() = default;
 		  checkRepetition.clear();
 	  }
 
-	  //функция подсчёта слов в документе
-	 multimap<string, vector< Entry>> countWordsMap;
-	  void wordCountFunction(multimap<string, vector< Entry>>& countWMap)
+	  void ConverterJSON :: wordCountFunction(multimap<string, vector< Entry>>& countWMap)
 	  {
 		  static const int dcN = configuration.documentsNumber;
 		  vector<string> vectorWord;
@@ -210,8 +195,7 @@ public: ConverterJSON() = default;
 		  }
 	  }
 
-	  //функция поиска ответов. Здесь ведётся поиск в контейнере.
-	  void searchAnswerFunction(multimap<string, vector< Entry>>& countWMap)
+	  void ConverterJSON :: searchAnswerFunction(multimap<string, vector< Entry>>& countWMap)
 	  {
 		  vector<string> requestWord;
 		  ifstream requestFile("requests.json");
@@ -220,7 +204,7 @@ public: ConverterJSON() = default;
 		  nlohmann::json configr;
 			  requestFile >> configr;
 		  requestFile.close();
-			  for (const auto& iterator : configr["number"].items())//добавленный цикл
+			  for (const auto& iterator : configr["number"].items())
 			  {
 				  string strRequest = configr["request"];
 			  wordSplitFunction(strRequest, requestWord);
@@ -231,7 +215,7 @@ public: ConverterJSON() = default;
 				  maxAbsoluteRelevanceDoc = 0,
 				  maxAbsoluteRelevance = 0,
 				  nlohmArrayCount = 0;
-			  answerconfig = { {"request", iterator.value()} };//добавлено
+			  answerconfig = { {"request", iterator.value()} };
 			  for (int i = 0; i < requestWord.size(); ++i)
 			  {
 				  for (auto it = countWMap.begin(); it != countWMap.end(); ++it)
@@ -289,14 +273,13 @@ public: ConverterJSON() = default;
 				  }
 				  cout << "\n";
 				  if (ansconfig[id] > 0)
-					  answconfig += {{ansconfig[id]}};//добавлено
+					  answconfig += {{ansconfig[id]}};
 			  }
-			  answerconfig = { {"request",  configr["number"]},{answconfig}};//добавлено
-			  ansfile << answerconfig;//добавлено
-			  answerconfig.clear();//добавлено
+			  answerconfig = { {"request",  configr["number"]},{answconfig}};
+			  ansfile << answerconfig;
+			  answerconfig.clear();
 		       searchResult.clear();
 		       ansconfig->clear();
 		       ansfile.close();
 	      } //закрывает auto& item : configr["number"].items
 	  }// выход из функции
-};//закрывает класс
