@@ -4,8 +4,8 @@
 #include <vector>
 #include <exception>
 #include "nlohmann/json.hpp"
-#include "Configuration.cpp"
-#include "Entry.cpp"
+#include "Configuration.h"
+#include "Entry.h"
 
 using namespace std;
 
