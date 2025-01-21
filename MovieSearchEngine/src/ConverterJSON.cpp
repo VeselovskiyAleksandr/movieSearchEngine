@@ -1,5 +1,6 @@
 
 #include "ConverterJSON.h"
+#include "nlohmann/json.hpp"
 
 	  void ConverterJSON :: start()
 	  {
@@ -166,21 +167,31 @@
 	  {
 		  static const int dcN = configuration.documentsNumber;
 		  vector<string> vectorWord;
+	//	  vector<string> vectorWord[dcN];/////////////
 		  vector<Entry> getWordCount;
+	//	  vector<Entry> getWordCount[dcN];/////////////
 		  string strWord = "";
+	//	  string strWord[dcN];/////////////
 		  int filesCount = 0;
 		  vector<Entry> vectorEntry;
+		  thread files[dcN];
+	//	  string moviePath[dcN];/////////////
 		  for (auto it = configuration.movieTitles.begin(); it != configuration.movieTitles.end(); ++it)
 		  {
 			  string moviePath = it->second;
+	//		  moviePath[filesCount] = it->second;////////////////////////
 			  ifstream file;
 			  file.open(moviePath);
+		//	  file.open(moviePath[filesCount]);/////////////////////////
 			  file.seekg(0);
 			  if (!file.is_open())
 			  {
 				  cerr << "\n" << "The file is not found." << "\n";
 			  }
+		//	  filesCount++;///////////////////
+	//	  }//////////////////////
 			  while (getline(file, strWord))
+	//	  while (getline(file, strWord[filesCount]))
 			  {
 				  wordSplitFunction(strWord, vectorWord);
 			  }

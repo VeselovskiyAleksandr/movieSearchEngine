@@ -3,13 +3,13 @@
 #include <fstream>
 #include <vector>
 #include <exception>
-#include "nlohmann/json.hpp"
 #include "Configuration.h"
 #include "Entry.h"
+#include <thread>
 
 using namespace std;
 
-class ConverterJSON
+ class ConverterJSON
 {
 public: ConverterJSON() = default;
 	  Configuration configuration;
@@ -37,7 +37,7 @@ public: ConverterJSON() = default;
 	  inline  void vectorEntryFillFunction(vector<string>& vectWord, vector<Entry>& getWC, int fileCount);
 
 	  //функция подсчёта слов в документе
-	  multimap<string, vector< Entry>> countWordsMap;
+	   multimap<string, vector< Entry>> countWordsMap;
 	  inline  void wordCountFunction(multimap<string, vector< Entry>>& countWMap);
 
 	  //функция поиска ответов. Здесь ведётся поиск в контейнере.

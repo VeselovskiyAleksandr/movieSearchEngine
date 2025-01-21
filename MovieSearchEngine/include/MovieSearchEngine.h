@@ -4,5 +4,5 @@
 #pragma once
 
 #include <string>
-#include "ConverterJSON.cpp"
+
 // TODO: установите здесь ссылки на дополнительные заголовки, требующиеся для программы.

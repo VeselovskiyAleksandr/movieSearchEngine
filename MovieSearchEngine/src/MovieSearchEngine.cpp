@@ -1,7 +1,6 @@
 ﻿// MovieSearchEngine.cpp: определяет точку входа для приложения.
 //
-#include "MovieSearchEngine.h"
-//#include "ConverterJSON.h"
+#include "ConverterJSON.h"
 
 int main()
 {
