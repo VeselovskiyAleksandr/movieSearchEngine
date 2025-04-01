@@ -1,8 +1,5 @@
 
 #include "ConverterJSON.h"
-#include "nlohmann/json.hpp"
-#include <future>
-//#pragma omp parallel 
 
 	  void ConverterJSON :: start()
 	  {
@@ -14,6 +11,7 @@
 			  throw exception();
 		  }
 			  cnfile >> config;
+			  cnfile.close();
 		  config["config"]["maxResponses"] = { MAX_RESPONS };
 		  cout << config["config"] << "\n";
 		  for (const auto& item : config["config"].items())
@@ -35,7 +33,6 @@
 			  configuration.movieTitles.insert(oPair);
 			  count++;
 		  }
-		  cnfile.close();
 	  };
 
 	  bool ConverterJSON :: FileIsExist(string filePath)
@@ -55,7 +52,6 @@
 		  if (FileIsExist(path))
 		  {
 			  ofstream file;
-			  file.open(path, std::ofstream::out | std::ofstream::trunc);
 			  file.close();
 		  }
 		  else
@@ -65,376 +61,412 @@
 		  }
 	  };
 
-	  void ConverterJSON :: requerysInputFunction(vector<string>& getRequests)
+	  void ConverterJSON::getRequestsFunction(map<int, vector<string>>& getRequests)
+	  {
+
+		  ifstream reqfile("requests.json");
+			  if (!reqfile)
+				  cout << "\n " << "Requests file is not found.";
+		  if (reqfile.peek() != EOF)
+		  {
+			  nlohmann::json reqconfig;
+			  reqfile.seekg(0);
+			  reqfile >> reqconfig;
+			  reqfile.close();
+			  int nReq = 0;
+			  string val = "";
+			  vector<string> vecRequest;
+			  for (const auto& item : reqconfig.items())
+			  {
+				  for (const auto& ir : item.value().items())
+				  {
+					 for (const auto& iq : ir.value().items())
+					 {
+						 val = to_string(iq.value());
+						 if((val[0]=='"')&&(val!= "Req")&&(val.size()>3))
+						 { 
+							 val.erase(0, 1);
+						    if (val.size() > 4)
+							{
+							     val.erase(val.size() - 1, 1);
+								 vecRequest.push_back(val);
+								 val = "";
+								 getRequests.emplace(nReq, vecRequest);
+					             vecRequest.clear();
+							     nReq++;
+							}
+					     }
+				     }
+			      }
+		      }
+		  }
+	  }
+
+	  void ConverterJSON::requerInputFunction(map<int, vector<string>>& getRequests)
 	  {
 		  if (getRequests.size() < configuration.maxRequest)
 		  {
 			  cout << "\n" << "                                      Information about domestic and foreign films" << "\n" << "\n";
-			  cout << "               Search query field" << "\n" << "\n";
-			  string requerie = "";
-			  getline(cin, requerie);
+			  cout << "               Search query field" << "\n" << "\n";	
+			  vector<string> vecRequest;
+              string requerie = "";
+			  int nReq = 1;
+    		  getline(cin, requerie);
 			  if (requerie.length() > configuration.maxStrRequestLength)
-				  requerie.erase(requerie.length() - configuration.maxStrRequestLength);
-			  getRequests.push_back(requerie);
+			  requerie.erase(requerie.length() - configuration.maxStrRequestLength);
+			  nReq = getRequests.size()+1;
+			  vecRequest.push_back(requerie);
 			  requerie = "";
-			  ofstream reqfile("requests.json");
-			  nlohmann::json reqconfig;
-			  reqconfig["number"] = getRequests.size();
-			  reqconfig["request"] = getRequests[getRequests.size() - 1];
-			  reqfile << reqconfig;
-			  reqfile.close();
-		  }
-	  }
-
-	  void ConverterJSON :: wordSplitFunction(string &sentence, vector<string>& setWords)
-//	  void ConverterJSON::wordSplitFunction(int n, int t, string sentence, vector<string> setWords[DOCUMENT_NUMBER])////////////////////////
-	  {
-	//	  cout << "\n00000 "<<" " << sentence.length() << " " << " " << sentence;///////////////////////
-		  string highlightedWord = "";
-	//	  string highlightedWord[DOCUMENT_NUMBER];//////////////////
-	//	  highlightedWord[n] = {0};///////////////////////
-		  int j = 0, k = 0;
-		  for (int ir = 0; ir < sentence.length(); ++ir)
-	//	  for (int ir = 0; ir < t; ++ir)////////////////////////////////////
-		  {
-
-			  if (sentence[ir] != '-' && sentence[ir] != '\'' && sentence[ir] != '/'  && sentence[ir] != ')' && sentence[ir] != '(' && sentence[ir] != ' ' && sentence[ir] != ';' && sentence[ir] != ':' && sentence[ir] != ',' && sentence[ir] != '.')
-	//		  if (sentence[ir] != '-' && sentence[ir] != '\'' && sentence[n][ir] != '/' && sentence[n][ir] != ')' && sentence[n][ir] != '(' && sentence[n][ir] != ' ' && sentence[n][ir] != ';' && sentence[n][ir] != ':' && sentence[n][ir] != ',' && sentence[n][ir] != '.')////////////////////////
+			  getRequests.emplace(nReq, vecRequest);
+			  nReq = 1;
+			  nlohmann::json reqconfig, requerConfig;
+			  vector< nlohmann::json>strConfig;
+			  for (auto it = getRequests.begin(); it != getRequests.end(); it++)
 			  {
-				  if (sentence[ir] >= 65 && sentence[ir] <= 90)
-		//		  if (sentence[n][ir] >= 65 && sentence[n][ir] <= 90)///////////////////
+				  for (const auto& iter : it->second)
 				  {
-					  sentence[ir] += 32;
+					  requerie = iter;
+					  if (requerie.size() >3)
+					  {
+						  strConfig.push_back({ nReq, requerie });
+						  requerie = "";
+					  }
+					  else
+						  requerie = "";
+					  reqconfig.clear();
 				  }
-		//		  highlightedWord += sentence[ir];
-	
-				  highlightedWord += sentence[ir];//////////////////
-
-				  j++;
-		   }
-			  else
-			  {
-				  setWords.push_back(highlightedWord);
-		//		  cout << "\n0000011111112277777777777777 " << sizeof(setWords)<<" "<< sentence << " " << highlightedWord << "\n";////////////////////
-		//		  setWords[n].push_back(highlightedWord);//////////////////
-				  highlightedWord = "";
-				  j = 0;
+					  nReq++;
 			  }
-
-			  if(ir==sentence.length()-1)
-		//	  if (ir == sizeof(sentence[n]))////////////////////////
-				  setWords.push_back(highlightedWord);
-		//		  setWords[n].push_back(highlightedWord);/////////////
+		      requerConfig = { "Req", strConfig };
+		      strConfig.clear();
+			  ofstream reqfile("requests.json", ios::out | ios::trunc);
+			  if (!reqfile)
+				  cout << "\n " << "Requests file is not found.";
+			  reqfile << requerConfig;	
+			  requerConfig.clear();
+			  reqfile.close();
+			  requerie = "";
+			  vecRequest.clear();
 		  }
 	  }
 
-	  //void ConverterJSON :: multiMapFillFunction(vector<Entry> &vectEntr, vector<Entry>& getWC, multimap<string, vector< Entry>>& countWordM)
-	  void ConverterJSON :: multiMapFillFunction(int n, vector<Entry> vectEntr[DOCUMENT_NUMBER], vector<Entry> getWC[DOCUMENT_NUMBER], multimap<string, vector< Entry>>& countWordM)//////////////////////////
+	  void ConverterJSON:: wordSplitFunction(vector<string>& sentence, vector<string>& setWords)
 	  {
-	//	  for (int ip = 0; ip < getWC.size(); ++ip)
-		  for (int ip = 0; ip < getWC[n].size(); ++ip)/////////////////////
+		  string highlightedWord = "";
+		  for (int ir = 0; ir < sentence.size(); ++ir)
+		  {
+			 for (int n = 0; n < sentence[ir].length(); ++n)
+			 {
+				 if (sentence[ir][n] != '-' && sentence[ir][n] != '\'' && sentence[ir][n] != '/' && sentence[ir][n] != ')' && sentence[ir][n] != '(' && sentence[ir][n] != ' ' && sentence[ir][n] != ';' && sentence[ir][n] != ':' && sentence[ir][n] != ',' && sentence[ir][n] != '.')
+				 {
+				    if (sentence[ir][n] >= 65 && sentence[ir][n] <= 90)
+				    {
+						sentence[ir][n] += 32;
+					}
+					  highlightedWord += sentence[ir][n];
+				 }
+				 else
+				 {
+					if (highlightedWord.length() > 3)
+					  setWords.push_back(highlightedWord);
+					 highlightedWord = "";
+				 }
+				 if (ir == sentence[ir].length() - 1)
+				 {
+					setWords.push_back(highlightedWord);
+				 }
+			 }
+		  }
+	  }
+
+	  void ConverterJSON :: multiMapFillFunction(vector<Entry> &vectEntr, vector<Entry>& getWC, multimap<string, vector< Entry>>& countWordM)
+	  {
+		  for (int ip = 0; ip < getWC.size(); ++ip)
 		  {
 			  int match—ount = 0;
-	//		  for (int iq = 0; iq < getWC.size(); ++iq)
-			  for (int iq = 0; iq < getWC[n].size(); ++iq)//////////////////
+			  for (int iq = 0; iq < getWC.size(); ++iq)
 			  {
-		//		  if ((getWC[ip].word == getWC[iq].word) && (match—ount == 0))
-				  if ((getWC[n][ip].word == getWC[n][iq].word) && (match—ount == 0))///////////////////
+				  if ((getWC[ip].word == getWC[iq].word) && (match—ount == 0))
 				  {
-		//			  vectEntr.push_back(getWC[iq]);
-					  vectEntr[n].push_back(getWC[n][iq]);///////////////////
+					  vectEntr.push_back(getWC[iq]);
 					  match—ount++;
 				  }
 			  }
-		//	  countWordM.insert({ getWC[ip].word, vectEntr });
-			  countWordM.insert({ getWC[n][ip].word, vectEntr[n] });////////////////
-		//	  vectEntr.clear();
-			  vectEntr[n].clear();///////////////////
+			  countWordM.insert({ getWC[ip].word, vectEntr });
+			  vectEntr.clear();
 		  }
-	//	  getWC.clear();
-		  getWC[n].clear();////////////
+		  getWC.clear();
 	  }
 
-//	  void ConverterJSON :: vectorEntryFillFunction(vector<string>& vectWord, vector<Entry>& getWC, int fileCount)
-	  void ConverterJSON::vectorEntryFillFunction(vector<string> vectWord, vector<Entry> getWC[DOCUMENT_NUMBER], int fileCount)///////////////////////
+	  void ConverterJSON :: vectorEntryFillFunction(vector<string>& vectWord, vector<Entry>& getWC, int fileCount)
 	  {
 		  size_t wordRepetitionCount = 0;
-	//	  int wordRepetitionCount = 0;///
-	//	  size_t wordRepetitionCount[DOCUMENT_NUMBER];////////////////////////////
-	//	  wordRepetitionCount[f] = 0;//////////////////////////
 		  int entryCount = 0;
 		  vector<string> checkRepetition;
-#pragma omp parallel for
 		  for (int itr = 0; itr < vectWord.size(); ++itr)
-	//	  for (size_t itr = 0; itr < vectWord[f].size(); ++itr)//////////////////////
 		  {
-
 			  Entry* entry = new Entry[MAX_SIZE];
 			  entry[entryCount].docId = fileCount;
-			  for (int iter = itr + 1; iter < vectWord.size(); ++iter)
-		//	  for (size_t iter = itr + 1; iter < vectWord[f].size(); ++iter)///////////////////////////
-			  {
-				  if (vectWord[itr] == vectWord[iter])
+			 for (int iter = itr + 1; iter < vectWord.size(); ++iter)
+			 {
+				 if (vectWord[itr] == vectWord[iter])
+				 {
+				    wordRepetitionCount++;
+				 }
+			 }
+				  wordRepetitionCount++;
+				  auto pointer = find(checkRepetition.begin(), checkRepetition.end(), vectWord[itr]);
+				  if ((pointer == end(checkRepetition)) && (vectWord[itr].size() > 3))
 				  {
-					  wordRepetitionCount++;
-	//				  wordRepetitionCount[f]++;////////////////////////////////////
+					  entry[entryCount].freqWordsCount = wordRepetitionCount;
+					  entry[entryCount].word = vectWord[itr];
+					  getWC.push_back(entry[entryCount]);
 				  }
-			  }
-			  wordRepetitionCount++;
-	//		  wordRepetitionCount[f]++;///////////////////////////////////////////
-    			  auto pointer = find(checkRepetition.begin(), checkRepetition.end(), vectWord[itr]);
-	//		  auto pointer = find(checkRepetition.begin(), checkRepetition.end(), vectWord[f][itr]);///////////////////////
-			  if ((pointer == end(checkRepetition)) && (vectWord[itr].size() > 3))
-	//		  if ((pointer == end(checkRepetition)) && (vectWord[f][itr].size() > 3))
-			  {
-				  entry[entryCount].freqWordsCount = wordRepetitionCount;
-		//		  entry[entryCount].freqWordsCount = wordRepetitionCount[f];////////////////////////////
-				  entry[entryCount].word = vectWord[itr];
-		//		  entry[entryCount].word = vectWord[f][itr]; ////////////////////////////
-		//		  getWC.push_back(entry[entryCount]);
-				  getWC[fileCount].push_back(entry[entryCount]);///////////////////////////////
-			  }
-			  checkRepetition.push_back(vectWord[itr]);
-		//	  checkRepetition.push_back(vectWord[f][itr]);//////////////////////////
-			  wordRepetitionCount = 0;
-	//		  wordRepetitionCount[f]; ///////////////////////////////////////////////
-			  ++entryCount;
-			  delete[entryCount] entry;
+				  checkRepetition.push_back(vectWord[itr]);
+				  wordRepetitionCount = 0;
+				  ++entryCount;
+				  delete[] entry;
 		  }
 		  checkRepetition.clear();
 	  }
 
-			  ///////////////////////////////////////////////////////////
-//	  void ConverterJSON::readingFromDatabase(int n, mutex film_mutex[DOCUMENT_NUMBER], string movPath[DOCUMENT_NUMBER], vector<string> vWord[DOCUMENT_NUMBER], vector<Entry> getWC[DOCUMENT_NUMBER], string  strWrd[DOCUMENT_NUMBER], int filesC[DOCUMENT_NUMBER], vector<Entry> vectEntr[DOCUMENT_NUMBER], multimap<string, vector< Entry>> &countWordMap)
-   //   void ConverterJSON::readingFromDatabase(promise<string>& promise)
-//	  {
-//		  string input;
-//		  getline(cin, input);
-//		  promise.set_value(input);
-//	  }
-	  /// //////////////////////////////////////////////////
-
-	//  void ConverterJSON :: wordCountFunction(multimap<string, vector< Entry>>& countWMap)
-//	  void ConverterJSON::wordCountFunction(multimap<string, vector< Entry>>countWordMap)
-	  void ConverterJSON::wordCountFunction(multimap<string, vector< Entry>> &countWordMap)
+      void ConverterJSON::readingFromDatabase(queue<string>& q, mutex& mtx,  condition_variable& cond,  atomic<bool> &fileComplete)
 	  {
-		  static const int dcN = configuration.documentsNumber;
-		  vector<string> vectorWord;
-	//	  vector<string> vectorWord[DOCUMENT_NUMBER];///////////////////
-	//	  vector<Entry> getWordCount;
-		  vector<Entry> getWordCount[DOCUMENT_NUMBER];//////////////////////
-		  string strWord = "";
-	//	  string strWord[DOCUMENT_NUMBER];//////////////////
-		  int filesCount = 0;
-	//	  int filesCount[DOCUMENT_NUMBER];////////////////////
-	//	  vector<Entry> vectorEntry;
-		  vector<Entry> vectorEntry[DOCUMENT_NUMBER];//////////////////
-	//	  ThreadPool pool(dcN);////////////////////////////
-	//	  std::vector< std::future<int> > results;/////////////////
-		  string moviePath[DOCUMENT_NUMBER];//////////////////////
-	//	  string moviePath;
-		  thread film[DOCUMENT_NUMBER];//////////////////////
-		  thread EntryFill[DOCUMENT_NUMBER];
-//		  thread wordSplit[DOCUMENT_NUMBER];
-		  thread multiMap[DOCUMENT_NUMBER];
-		  mutex film_mutex[DOCUMENT_NUMBER];
-		  promise<string> promise;/////////////////
-			  ifstream file[DOCUMENT_NUMBER];
-		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
-		  {
-
-			  size_t it = configuration.movieTitles.count(i + 1);
-			  moviePath[i] = configuration.movieTitles.at(i + 1);
-			  file[i].open(moviePath[i]);
-			  		  if (!file[i].is_open())
-			  		  {
-			  			  cerr << "\n" << "The file is not found." << "\n";
-			  		  }
+		  while (fileComplete) {
+			  unique_lock<mutex> lock(mtx);
+			  cond.wait(lock, [&] { return !q.empty() || !fileComplete; });
+			  if (q.empty()) {
+				  continue;
+			  }
+			  string line = q.front();
+			  q.pop();
+			  lock.unlock();
+			  ProcessData(line);
 		  }
-
-#pragma omp parallel for
-
-		  for (int i =0; i<DOCUMENT_NUMBER ; ++i)
-		  {
-
-			  //	  for (auto it = configuration.movieTitles.begin(); it != configuration.movieTitles.end(); ++it)
-			  //	  {
-			  //		  film[i] = thread( this, i, film_mutex, moviePath, vectorWord, getWordCount, strWord, filesCount, vectorEntry, countWordMap);
-	//		  film[i] = thread(&ConverterJSON::readingFromDatabase, this, i, film_mutex, moviePath, vectorWord, strWord);
-
-				///////////////////////////////////////////////////////////
-//		  size_t it = configuration.movieTitles.count(i + 1);
-//		  moviePath[i] = configuration.movieTitles.at(i + 1);
-	//		  file[i].seekg(0, ios::end);
-		//	 int t=  file[i].tellg();
-			 file[i].seekg(0);////////////////////////
-//			 auto future = promise.get_future();///////////////////////
-//			 thread file(&ConverterJSON::readingFromDatabase, ref(strWord));////////////////////////
-//			 while (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
-//			 {
-//				 this_thread::sleep_for(std::chrono::seconds(1));
-//			 }
-				  while (getline(file[i], strWord))
-				  {	
-
-					  film_mutex[i].lock();
-
-					  film[i] = thread(&ConverterJSON::wordSplitFunction, this, strWord, vectorWord);
-					  cout << "\n4444444444 " << " " << strWord;
-					  film_mutex[i].unlock();
-				  }
-			strWord = "";
-		  };
-		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
-		  {
-		  film_mutex[i].lock();
-			  film_mutex[i].unlock();
-			  film[i].join();
-		  file[i].close();
-		  };
-
-		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
-		  {
-	
-			  EntryFill[i] = thread(&ConverterJSON::vectorEntryFillFunction, this, vectorWord, getWordCount, i);
-			  vectorWord.clear();
-	
-		  };
-
-		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
-		  {
-			  EntryFill[i].join();
-		  };
-		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
-		  {
-			  multiMap[i]=thread(&ConverterJSON::multiMapFillFunction, this, i, vectorEntry, getWordCount, countWordMap);
-			  getWordCount[i].clear();
-	  };
-		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
-		  {
-			  multiMap[i].join();
-	//		  cout << "\n000001111111222222222 " << " " << i;///////////////////////
-		  };
-	//	  );
-		  /////////////////////////////////////////////////////////
-		  
-//		  string moviePath = it->second;
-//		  ifstream file;
-//		  file.open(moviePath);
-//		  file.seekg(0);
-//		  if (!file.is_open())
-//		  {
-//			  cerr << "\n" << "The file is not found." << "\n";
-//		  }
-//		  while (getline(file, strWord))
-//		  {
-//			  wordSplitFunction(strWord, vectorWord);
-//		  }
-//		  file.close();
-//		  int entryCount = 0;
-//			  vector<string> checkRepetition;
-	//		  vectorEntryFillFunction(vectorWord, getWordCount, filesCount);
-	//		  filesCount++;
-	//		  vectorWord.clear();
-	//		  multiMapFillFunction(vectorEntry, getWordCount, countWMap);
-	//		  getWordCount.clear();
-		//  };
 	  }
 
-	  void ConverterJSON :: searchAnswerFunction(multimap<string, vector< Entry>>& countWordMap)
-	//  void ConverterJSON::searchAnswerFunction(multimap<string, vector< Entry>> &countWordMap)//////////////////
+	  void ConverterJSON::ProcessData(const string& line)
+	  {	  
+		  lock_guard< mutex > lk(film_mutex);
+      }
+
+	  void ConverterJSON::wordCountFunction(multimap<string, vector< Entry>>&countWordsMap)
 	  {
-	//	  cout << "\n4444444444 " << countWordMap.size();///////////////////////
-		  vector<string> requestWord;
-	//	  vector<string> requestWord[1];///////////////////
-		  ifstream requestFile("requests.json");
-		  if (!requestFile)
-			  cout << "\n " << "The file is not found.";
-		  nlohmann::json configr;
-			  requestFile >> configr;
-		  requestFile.close();
-			  for (const auto& iterator : configr["number"].items())
+		  vector<string> vectorWord,  wordsFromFilesVector;
+		  map<int, vector <string>>wordsFromFiles;
+		  vector<Entry> getWordCount,  vectorEntry;
+		  string strWord = "", moviePath="";
+		  int filesCount = 0;
+///////////////////////////////////////////////////////////////////////////
+//		  string moviePath[DOCUMENT_NUMBER];
+//		  thread film[DOCUMENT_NUMBER];
+//		  mutex mtx, m;
+//		  queue<string> lines;
+//		  atomic<bool> fileComplete = true;
+//		  for (int i = 0; i < DOCUMENT_NUMBER; ++i)
+//		  {
+//			  moviePath[i] = configuration.movieTitles.at(i + 1);
+//			  file[i].open(moviePath[i]);
+//			  		  if (!file[i].is_open())
+//			  		  {
+//			  			  cerr << "\n" << "The file "<< configuration.movieTitles.at(i + 1) << " is not found." << "\n";
+//			  		  }
+//			 file[i].seekg(0);
+//		  }
+//		  for (int i =0; i<DOCUMENT_NUMBER ; ++i)
+//		  {
+//				  while ( getline(file[i], strWord))
+//				  {	
+//					  lines.push(strWord);
+//					   wordsFromFilesVector.push_back(strWord);
+//					   if (file[i].peek(), file[i].eof())
+//					   {
+//						 wordsFromFiles.emplace(i, wordsFromFilesVector);
+//			             strWord = "";
+//					   }
+//						  strWord = "";
+//				  }
+//				  file[i].close();
+//				  vector<thread> threads;
+//				  for (int i = 0; i < DOCUMENT_NUMBER; ++i) {
+//					  threads.emplace_back(&ConverterJSON::readingFromDatabase, this, ref(lines), ref(mtx), ref(cond), ref(fileComplete));
+//				  }
+//				  fileComplete = false;
+//				  cond.notify_all();
+//				  for (auto& thread : threads) {
+//					  thread.join();
+//				  }
+//		  };
+////////////////////////////////////////////////////////////////////////////
+		  for (auto it = configuration.movieTitles.begin(); it != configuration.movieTitles.end(); ++it)
+		  {
+			  string moviePath = it->second;
+			  ifstream file;
+			  file.open(moviePath);
+			  file.seekg(0);
+			  if (!file.is_open())
 			  {
-				  string strRequest = configr["request"];
-	//			  string strRequest[1] = { "request"};
-			  wordSplitFunction(strRequest, requestWord);
-	//			  wordSplitFunction(0,0, strRequest, requestWord);//////////////////////
-			  multimap<size_t, size_t> searchResult;
-			  ofstream ansfile("answers.json");
-			  nlohmann::json ansconfig[MAX_RESPONS], ansconfigur, answerconfig, answconfig;
-		//	  int absoluteRelevance = 0,
-			  size_t absoluteRelevance = 0,////////////////////
+				  cerr << "\n" << "The file is not found." << "\n";
+			  }
+			  while (getline(file, strWord))
+			  {
+				  wordsFromFilesVector.push_back(strWord);
+			  }
+			  file.close();
+			  wordSplitFunction(wordsFromFilesVector, vectorWord);
+			  wordsFromFilesVector.clear();
+			  vectorEntryFillFunction(vectorWord, getWordCount, filesCount);
+			  filesCount++;
+			  vectorWord.clear();
+			  multiMapFillFunction(vectorEntry, getWordCount, countWordsMap);
+			  getWordCount.clear();
+		  }
+	  }
+
+	  void ConverterJSON::searchAnswerFunction(multimap<string, vector< Entry>> &countWordsMap, map <int, vector< string>> getRequest)
+	  {
+		  vector<string> requestWord, reqtWord;
+		  int reqNumber = 1;
+		  nlohmann::json dataConfig[MAX_RESPONS], docConfig, requestNumberConfig, requestResultConfig, answersResultConfig;
+		  vector< nlohmann::json> resultVectorConfig, answersVectorConfig, numRequestConfig;
+			  for (auto iterator = getRequests.begin(); iterator != getRequests.end(); iterator++)
+			  {
+				  for (auto& wordsRequest : iterator->second)
+				  {
+					  reqtWord.push_back(wordsRequest);
+				  }
+				  reqtWord.push_back(";");
+				  wordSplitFunction(reqtWord, requestWord);
+				  reqtWord.clear();
+				  multimap<size_t, size_t> searchResult;
+				  size_t absoluteRelevance = 0,
 				  maxAbsoluteRelevanceDoc = 0,
 				  maxAbsoluteRelevance = 0,
 				  nlohmArrayCount = 0;
-			  answerconfig = { {"request", iterator.value()} };
-		//	  for (int i = 0; i < requestWord.size(); ++i)
-			  for (int i = 0; i < requestWord[0].size(); ++i)//////////////////////
-			  {
-				  for (auto it = countWordMap.begin(); it != countWordMap.end(); ++it)
+				  for (int i = 0; i < requestWord.size(); ++i)
 				  {
-					  if (requestWord[i] == it->first)
-		//			  if (requestWord[0][i] == it->first)/////////////////////////
+					  for (auto it = countWordsMap.begin(); it != countWordsMap.end(); ++it)
 					  {
-						  for (auto m : it->second)
+						  if (requestWord[i] == it->first)
 						  {
-							  searchResult.insert({ m.freqWordsCount, m.docId });
-							  absoluteRelevance += m.freqWordsCount;
-							  if (absoluteRelevance > maxAbsoluteRelevance)
-								  maxAbsoluteRelevanceDoc = absoluteRelevance;
-						  } // Á‡Í˚‚‡ÂÚ ˆËÍÎ ÔÓ auto m : it->second
-					  }
-				  }//Á‡Í˚‚‡ÂÚ auto it = countWMap
-				  int countResponses = 0;
-				  for (auto iter = searchResult.crbegin(); iter != searchResult.crend(); ++iter)
-				  {
-					  if (countResponses < MAX_RESPONS)
-					  {
-						  if (iter->first > 0)
-						  {
-							  ansconfigur += { { "Document number", iter->second }, { "Number of matches",iter->first }, };
+							  for (auto m : it->second)
+							  {
+								  searchResult.insert({ m.freqWordsCount, m.docId });
+								  absoluteRelevance += m.freqWordsCount;
+								  if (absoluteRelevance > maxAbsoluteRelevance)
+									  maxAbsoluteRelevanceDoc = absoluteRelevance;
+							  }
 						  }
 					  }
-					  else
+					  int countResponses = 0;
+					  for (auto iter = searchResult.crbegin(); iter != searchResult.crend(); ++iter)
 					  {
-						  searchResult.clear();
-						  break;
+						  if (countResponses < MAX_RESPONS)
+						  {
+							  if (iter->first > 0)
+							  {
+								  docConfig += { { "Document number", iter->second }, { "Number of matches",iter->first }, };
+							  }
+						  }
+						  else
+						  {
+							  searchResult.clear();
+							  break;
+						  }
+						  countResponses++;
+
 					  }
-					  countResponses++;
-				  } //Á‡Í˚‚‡ÂÚ ˆËÍÎ ÔÓ searchResult.cr
-				  if (absoluteRelevance > 0)
-					  ansconfig[nlohmArrayCount] = { { "word ", requestWord[i]},{"result", { absoluteRelevance > 0} }, {"Absolute relevance", absoluteRelevance},{"Relative relevance",0.}, { ansconfigur} };
-				  if (absoluteRelevance == 0)
-				  {
-					  ansconfig[nlohmArrayCount] = { { "word ", requestWord[i]}, {"result", { absoluteRelevance != 0}}, {"Absolute relevance", absoluteRelevance},{"Relative relevance",0.}, { ansconfigur == 0} };
+					  if (absoluteRelevance > 0)
+						  dataConfig[i] = { { "word ", requestWord[i]},{"result", { absoluteRelevance > 0} }, {"Absolute relevance", absoluteRelevance},{"Relative relevance",0.}, { docConfig} };
+					  if (absoluteRelevance == 0)
+					  {
+						  dataConfig[i] = { { "word ", requestWord[i]}, {"result", { absoluteRelevance != 0}}, {"Absolute relevance", absoluteRelevance},{"Relative relevance",0.}, { docConfig == 0} };
+					  }
+					  docConfig.clear();
+					  absoluteRelevance = 0;
+					  searchResult.clear();
+					  if (i == requestWord.size()-1)
+						  requestWord.clear();
+					  if (maxAbsoluteRelevanceDoc > maxAbsoluteRelevance)
+						  maxAbsoluteRelevance = maxAbsoluteRelevanceDoc;
 				  }
-				  nlohmArrayCount++;
-				  ansconfigur.clear();
-				  absoluteRelevance = 0;
+			      double relativeRelevance = 0;
+				  for (int id = 0; id < MAX_RESPONS; ++id)
+				  {
+					  for (const auto& item : dataConfig[id].items())
+					  {
+						  relativeRelevance = (double)dataConfig[id][2].at(1) / (double)maxAbsoluteRelevance;
+						  relativeRelevance = round(relativeRelevance * 100) / 100;
+						  dataConfig[id][3].at(1) = relativeRelevance;
+//						  cout << "\n " << item.value();
+
+					  }
+//					  cout << "\n";
+					  if (dataConfig[id] > 0)
+					  {
+						  requestResultConfig += { {dataConfig[id]}};
+					  }
+				  }
+				  requestNumberConfig = { {reqNumber, {requestResultConfig} } };
+				  resultVectorConfig.push_back(requestNumberConfig);
+				  requestResultConfig.clear();
+				  requestNumberConfig.clear();
 				  searchResult.clear();
-				  if (maxAbsoluteRelevanceDoc > maxAbsoluteRelevance)
-					  maxAbsoluteRelevance = maxAbsoluteRelevanceDoc;
-			  } //Á‡Í˚‚‡ÂÚ i < requestWord.size()
-			  double relativeRelevance = 0;
-			  for (int id = 0; id < MAX_RESPONS; ++id)
-			  {
-				  for (const auto& item : ansconfig[id].items())
+				  dataConfig->clear();
+				  ++reqNumber;
+	          } 
+		  answersVectorConfig.push_back({ "Answers", resultVectorConfig });
+		  ofstream ansfile("answers.json", ios::out | ios::trunc);
+		  if (!ansfile)
+			  cout << "\n " << "Requests file is not found.";
+		  ansfile << answersVectorConfig;
+		  ansfile.close();
+	  }
+
+	  void ConverterJSON::getAnswerFunction()
+	  {
+		  ifstream ansfile("answers.json");
+		  if (!ansfile)
+			  cout << "\n " << "Requests file is not found.";
+		  nlohmann::json ansconfig;
+		  int nReq = 0;
+		  string val = "", key="";
+		  vector<string> vecAnswer;
+		  if (ansfile.peek() != EOF)
+		  {
+		  ansfile.seekg(0);
+		  ansfile >> ansconfig;
+		  ansfile.close();
+		     for (const auto& item : ansconfig.items())
+		     {
+			   for (const auto& ir : item.value().items())
+			   {
+				  for (const auto& iq : ir.value().items())
 				  {
-					  relativeRelevance = (double)ansconfig[id][2].at(1) / (double)maxAbsoluteRelevance;
-					  relativeRelevance = round(relativeRelevance * 100) / 100;
-					  ansconfig[id][3].at(1) = relativeRelevance;
-					  cout << "\n " << item.value();
+					  for (const auto& it : iq.value().items())
+					  {
+						  for (const auto& im : it.value().items())
+						  {
+							  if (nReq % 2 > 0)
+							  {
+								  key = to_string(im.value());
+								  vecAnswer.push_back(key);
+							  }
+							  if (nReq % 2 == 0)
+							  {
+								  val = to_string(im.value());
+								  vecAnswer.push_back(val);
+							  }
+								  nReq++;
+										  val = "";
+						  }
+					  }
 				  }
-				  cout << "\n";
-				  if (ansconfig[id] > 0)
-					  answconfig += {{ansconfig[id]}};
-			  }
-			  answerconfig = { {"request",  configr["number"]},{answconfig}};
-			  ansfile << answerconfig;
-			  answerconfig.clear();
-		       searchResult.clear();
-		       ansconfig->clear();
-		       ansfile.close();
-	//		   cout << "\n000000000000 " << " " << countWMap.size();/////////////////////////////
-	      } //Á‡Í˚‚‡ÂÚ auto& item : configr["number"].items
-	  }// ‚˚ıÓ‰ ËÁ ÙÛÌÍˆËË
+			   }
+		     }
+		  }
+		  for (int i = 0; i < vecAnswer.size(); ++i)
+		  {
+			  cout << "\n " << vecAnswer[i];
+		  }
+	  }

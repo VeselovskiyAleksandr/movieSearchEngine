@@ -21,26 +21,26 @@ using namespace std;
 
 class ThreadPool {
 public:
- //   ThreadPool(size_t);
-    ThreadPool(int);
+    ThreadPool(size_t);
+ // ThreadPool(int);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
         ->std::future<typename result_of<F(Args...)>::type>;
     ~ThreadPool();
 private:
-    // need to keep track of threads so we can join them
+    // отслеживание потоков для присоединения к ним
     vector<thread> workers;
     // the task queue
     queue<function<void()>> tasks;
-    // synchronization
+    // синхронизация
     mutex queue_mutex;
     condition_variable condition;
     bool stop;
 };
 
-// the constructor just launches some amount of workers
+// конструктор запускает некоторое количество процессов
 //inline ThreadPool::ThreadPool(size_t threads)
-inline ThreadPool::ThreadPool(int threads)
+inline ThreadPool::ThreadPool(size_t threads)
     : stop(false)
 {
  //   for (size_t i = 0; i < threads; ++i)

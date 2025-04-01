@@ -1,8 +1,6 @@
 ﻿// MovieSearchEngine.cpp: определяет точку входа для приложения.
-//
-#include "ConverterJSON.h"
-#include <thread>
 
+#include "ConverterJSON.h"
 int main()
 {
 	ConverterJSON converterJSON;
@@ -17,13 +15,10 @@ int main()
 	}
 	converterJSON.openFile("requests.json");
 	converterJSON.openFile("answers.json");
-	converterJSON.requerysInputFunction(converterJSON.getRequests);
+	converterJSON.getRequestsFunction(converterJSON.getRequests);
+//	converterJSON.requerInputFunction(converterJSON.getRequests);
 	converterJSON.wordCountFunction(converterJSON.countWordsMap);
-//	cout << "\n000000000000 " << " " << converterJSON.countWordsMap.size();// 
-	converterJSON.searchAnswerFunction(converterJSON.countWordsMap);
-//	for (auto it = converterJSON.countWordsMap.begin(); it != converterJSON.countWordsMap.end(); it++)
-//	{
-//		cout << "\n000000000000 " <<" "<< converterJSON.countWordsMap.size();// << " " << it->second;
-//	}
+	converterJSON.searchAnswerFunction(converterJSON.countWordsMap, converterJSON.getRequests);
+	converterJSON.getAnswerFunction();
 	return 0;
 }
