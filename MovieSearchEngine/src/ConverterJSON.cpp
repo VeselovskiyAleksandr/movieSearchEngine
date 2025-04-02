@@ -1,5 +1,6 @@
 
 #include "ConverterJSON.h"
+#include <filesystem>
 
 	  void ConverterJSON :: start()
 	  {
@@ -51,8 +52,16 @@
 	  {
 		  if (FileIsExist(path))
 		  {
-			  ofstream file;
-			  file.close();
+			  if (filesystem::current_path() == "answers.json")
+			  {
+				  ofstream file("answers.json", ios::out | ios::trunc);
+				  file.close();
+			  }
+			  else
+			  {
+				  ofstream file;
+				  file.close();
+			  }
 		  }
 		  else
 		  {
@@ -398,21 +407,21 @@
 						  relativeRelevance = (double)dataConfig[id][2].at(1) / (double)maxAbsoluteRelevance;
 						  relativeRelevance = round(relativeRelevance * 100) / 100;
 						  dataConfig[id][3].at(1) = relativeRelevance;
-//						  cout << "\n " << item.value();
+						  cout << "\n " << item.value();
 
 					  }
-//					  cout << "\n";
+					  cout << "\n";
 					  if (dataConfig[id] > 0)
 					  {
 						  requestResultConfig += { {dataConfig[id]}};
 					  }
+				  dataConfig[id].clear();
 				  }
 				  requestNumberConfig = { {reqNumber, {requestResultConfig} } };
 				  resultVectorConfig.push_back(requestNumberConfig);
 				  requestResultConfig.clear();
 				  requestNumberConfig.clear();
 				  searchResult.clear();
-				  dataConfig->clear();
 				  ++reqNumber;
 	          } 
 		  answersVectorConfig.push_back({ "Answers", resultVectorConfig });
@@ -451,14 +460,16 @@
 							  {
 								  key = to_string(im.value());
 								  vecAnswer.push_back(key);
+								  key = "";
 							  }
 							  if (nReq % 2 == 0)
 							  {
 								  val = to_string(im.value());
 								  vecAnswer.push_back(val);
+									  val = "";
 							  }
 								  nReq++;
-										  val = "";
+	
 						  }
 					  }
 				  }
