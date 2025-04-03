@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <queue>
 #include "nlohmann/json.hpp"
+#include <filesystem>
 
 using namespace std;
 using json = nlohmann::json;
@@ -27,9 +28,6 @@ public: ConverterJSON() = default;
 
 	  //функция начала работы движка
 	   void start();
-
-	  //функция проверки наличия файла
-	   bool FileIsExist(string filePath);
 
 	  //функция проверки открытия файла
 	  void openFile(string path);

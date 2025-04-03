@@ -1,6 +1,5 @@
 
 #include "ConverterJSON.h"
-#include <filesystem>
 
 	  void ConverterJSON :: start()
 	  {
@@ -36,21 +35,9 @@
 		  }
 	  };
 
-	  bool ConverterJSON :: FileIsExist(string filePath)
-	  {
-		  bool isExist = false;
-		  std::ifstream fin(filePath.c_str());
-
-		  if (fin.is_open())
-			  isExist = true;
-
-		  fin.close();
-		  return isExist;
-	  }
-
 	  void ConverterJSON :: openFile(string path)
 	  {
-		  if (FileIsExist(path))
+		 if(filesystem::exists(path))
 		  {
 			  if (filesystem::current_path() == "answers.json")
 			  {
